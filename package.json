@@ -19,7 +19,7 @@
     "json-schema-defaults": "bin/defaults.js"
   },
   "scripts": {
-    "test": "./node_modules/.bin/jasmine-node test/ && ./node_modules/karma/bin/karma start --single-run"
+    "test": "npx jasmine-node test/ && npx karma start --single-run"
   },
   "keywords": [
     "json",

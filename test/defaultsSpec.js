@@ -22,7 +22,7 @@ describe("wrapper", function () {
 });
 
 
-describe("defaults", function () {
+describe("defaults:", function () {
     
     it("reads defaults from object attributes", function () {
         expect(defaults({
@@ -44,11 +44,11 @@ describe("defaults", function () {
         });
     });
     
-    it("returns empty object if properties are not present", function () {
+    it("excludes object if properties are not present", function () {
         expect(defaults({
             "title": "Album Selector",
             "type": "object"
-        })).toEqual({});
+        })).toEqual(undefined);
     });
     
     it("sets a falsy value", function () {
@@ -70,7 +70,7 @@ describe("defaults", function () {
         });
     });
     
-    it("returns empty object if nested object's properties are not present", function () {
+    it("returns undefined if nested object's properties are not present", function () {
         expect(defaults({
             "title": "Wall",
             "type": "object",
@@ -81,8 +81,36 @@ describe("defaults", function () {
                     "albumSelector": true
                 }
             }
+        })).toEqual(undefined);
+    });
+    
+    it("returns object if any nested object's properties have defaults", function () {
+        expect(defaults({
+            "title": "Wall",
+            "type": "object",
+            "properties": {
+                "album": {
+                    "title": "Album Selector",
+                    "type": "object",
+                    "properties": {
+                        "albumSelector": {
+                            "type": "object",
+                            "properties": {
+                                "nested": {
+                                    "type": "string",
+                                    "default": "value"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         })).toEqual({
-            album: {}
+            album: {
+                albumSelector: {
+                    nested: 'value'
+                }
+            }
         });
     });
     
@@ -130,7 +158,7 @@ describe("defaults", function () {
                     "type": "string"
                 }
             }
-        })).toEqual({});
+        })).toEqual(undefined);
     });
     
     it("sets default values of an array type", function () {
@@ -146,7 +174,7 @@ describe("defaults", function () {
         ]);
     });
     
-    it("sets default values of nested array type", function () {
+    it("excluedes `albums` array if no default", function () {
         expect(defaults({
             "type": "object",
             "properties": {
@@ -163,14 +191,43 @@ describe("defaults", function () {
                     }
                 }
             }
+        })).toEqual(
+            // wiwo: we expect the object to be empty because
+            // there is no default for the `albums` array
+            undefined
+        );
+    });
+    
+    it("sets default values of nested array type", function () {
+        expect(defaults({
+            "type": "object",
+            "properties": {
+                "albums": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "shortcut": {
+                                "type": "string",
+                                "default": "abc123"
+                            }
+                        }
+                    },
+                    "default": [
+                        {"shortcut": "testValue"},
+                        {},
+                    ]
+                }
+            }
         })).toEqual({
             "albums": [
-                {"shortcut": "abc123"}
+                {"shortcut": "testValue"},
+                {}  // doesn't match schema, but it's in the default so we expect it
             ]
         });
     });
     
-    it("returns empty array when items are not present", function () {
+    it("returns undefined for array when defaults are not present", function () {
         expect(defaults({
             "type": "object",
             "properties": {
@@ -178,10 +235,57 @@ describe("defaults", function () {
                     "type": "array"
                 }
             }
-        })).toEqual({
-            "albums": []
-        });
+        })).toEqual(undefined);
     });
+    
+    
+    /**
+     * wiwo:
+     */
+    describe('wiwo:', function(){
+        
+        it("sets default values of an array with objects", function () {
+            expect(defaults({
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "shortcut": {
+                            "type": "string",
+                            // wiwo NOTE: Defaults on nested array objects are ignored
+                            "default": "abc123"
+                        }
+                    }
+                },
+                "default": [
+                    {
+                        "shortcut": "defaultValue"
+                    }
+                ]
+            })).toEqual([
+                { "shortcut": "defaultValue" }
+            ]);
+        });
+        
+        // /**
+        //  * array object:
+        //  */
+        // xdescribe('items is array:', function(){
+        //    
+        //     it('handles object type', function(){
+        //         fail('not implemented yet');
+        //     });
+        //    
+        //     it('sets empty array if minItems == 0', function(){
+        //         fail('not implemented yet');
+        //     });
+        //    
+        // });
+        // // End of 'array object:'.
+        
+    });
+    // End of 'wiwo:'.
+    
     
     it('returns defaults if they are present in reference', function () {
         expect(defaults({
@@ -210,7 +314,7 @@ describe("defaults", function () {
             "type": "object",
             "properties": {
                 "per_page": {
-                    "$ref": "#/definitions/page_per"
+                    "$ref": "#/definitions/INVALID"
                 },
                 "sort": {
                     "type": "string"
@@ -222,7 +326,7 @@ describe("defaults", function () {
                     "default": 30
                 }
             }
-        })).toEqual({});
+        })).toEqual(undefined);
     });
     
     it('returns defaults if they are present in nested reference', function () {
